@@ -38,7 +38,7 @@ describe("API de livros", () => {
 
     expect(response.body).toEqual({
       error:
-        "Título, autor, edição, localidade, ano de publicação, editora e id são requeridos",
+        "Título, autor, edição, localidade, ano de publicação e editora são requeridos",
     });
     expect(books).toHaveLength(0);
   });
@@ -51,6 +51,7 @@ describe("API de livros", () => {
       edicao: "edicao",
       ano: 2024,
       editora: "editora",
+      id: 1,
     });
 
     const response = await request(app)
@@ -66,10 +67,21 @@ describe("API de livros", () => {
       edicao: "edicao",
       ano: 2024,
       editora: "editora",
+      id: 1,
     });
   });
 
   it("a atualização das informações de um livro existente", async () => {
+    books.push({
+      titulo: "titulo",
+      autor: "autor",
+      local: "local",
+      edicao: "edicao",
+      ano: 2024,
+      editora: "editora",
+      id: 1,
+    });
+
     const newBook = {
       titulo: "titulo",
       autor: "autor",
@@ -77,13 +89,13 @@ describe("API de livros", () => {
       edicao: "edicao",
       ano: 2024,
       editora: "editora",
+      id: 1,
     };
-    const id = 1;
 
     const response = await request(app)
-      .put("/books/" + id)
+      .put("/books/1")
       .send(newBook)
-      .expect(201)
+      .expect(200)
       .expect("Content-Type", /json/);
 
     expect(response.body).toMatchObject(newBook);
@@ -91,86 +103,79 @@ describe("API de livros", () => {
   });
 
   it("a remoção de um livro e confirmação de que ele não existe mais", async () => {
-    const newBook = {
+    books.push({
       titulo: "titulo",
       autor: "autor",
       local: "local",
       edicao: "edicao",
       ano: 2024,
       editora: "editora",
-    };
+    });
+    const id = 1;
 
     const response = await request(app)
-      .post("/books")
-      .send(newBook)
-      .expect(201)
+      .delete("/books/" + id)
+      .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(response.body).toMatchObject(newBook);
-    expect(response.body).toHaveProperty("id", 1);
-    expect(books).toHaveLength(1);
+    expect(response.body).toEqual("Livro " + id + " deletado com sucesso!");
+    expect(books).toHaveLength(0);
   });
 
   it("a realização de um empréstimo, garantindo que o livro não esteja disponível para outro empréstimo", async () => {
-    const newBook = {
+    books.push({
       titulo: "titulo",
       autor: "autor",
       local: "local",
       edicao: "edicao",
       ano: 2024,
       editora: "editora",
-    };
+      emprestado: "não",
+      id: 1,
+    });
+
+    const id = 1;
 
     const response = await request(app)
-      .post("/books")
-      .send(newBook)
-      .expect(201)
+      .post("/loans/" + id)
+      .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(response.body).toMatchObject(newBook);
-    expect(response.body).toHaveProperty("id", 1);
+    expect(response.body).toEqual("O livro está sendo emprestado? A: sim");
     expect(books).toHaveLength(1);
   });
 
   it("a realização da devolução de um livro, tornando-o disponível novamente", async () => {
-    const newBook = {
+    books.push({
       titulo: "titulo",
       autor: "autor",
       local: "local",
       edicao: "edicao",
       ano: 2024,
       editora: "editora",
-    };
+      emprestado: "sim",
+      id: 1,
+    });
+
+    const id = 1;
 
     const response = await request(app)
-      .post("/books")
-      .send(newBook)
-      .expect(201)
+      .post("/returns/" + id)
+      .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(response.body).toMatchObject(newBook);
-    expect(response.body).toHaveProperty("id", 1);
+    expect(response.body).toEqual("O livro está sendo emprestado? A: não");
     expect(books).toHaveLength(1);
   });
 
   it("o comportamento ao tentar emprestar um livro indisponível ou inexistente", async () => {
-    const newBook = {
-      titulo: "titulo",
-      autor: "autor",
-      local: "local",
-      edicao: "edicao",
-      ano: 2024,
-      editora: "editora",
-    };
+    const id = -1;
 
     const response = await request(app)
-      .post("/books")
-      .send(newBook)
-      .expect(201)
+      .post("/loans/" + id)
+      .expect(404)
       .expect("Content-Type", /json/);
 
-    expect(response.body).toMatchObject(newBook);
-    expect(response.body).toHaveProperty("id", 1);
-    expect(books).toHaveLength(1);
+    expect(response.body).toEqual("Livro não foi encontrado!");
   });
 });
