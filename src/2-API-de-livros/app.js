@@ -3,8 +3,10 @@ const app = express();
 
 app.use(express.json()); // ContentType
 
+// Banco de dados
 let books = [];
 
+// Para adicionar um novo livro
 app.post("/books", (req, res) => {
   const book = req.body;
   if (
@@ -15,70 +17,78 @@ app.post("/books", (req, res) => {
     !book.ano ||
     !book.editora
   ) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Título, autor, edição, localidade, ano de publicação e editora são requiridos",
-      });
+    return res.status(400).json({
+      error:
+        "Título, autor, edição, localidade, ano de publicação e editora são requeridos",
+    });
   }
   book.id = books.length + 1;
   books.push(book);
   res.status(201).json(book);
 });
 
+// Para listar todos os livros
 app.get("/books", (req, res) => {
-  const user = req.body;
-  if (!user.name || !user.email) {
-    return res.status(400).json({ error: "Name and email are required" });
-  }
-  user.id = users.length + 1;
-  users.push(user);
-  res.status(201).json(user);
+  res.status(200);
 });
 
+// Para atualizar informações de um livro
 app.put("/books/:id", (req, res) => {
-  const user = req.body;
-  if (!user.name || !user.email) {
-    return res.status(400).json({ error: "Name and email are required" });
+  const modBook = req.body;
+  const id = req.params.id;
+  let index = books.findIndex((obj) => obj.id === id);
+
+  if (
+    !modBook.titulo ||
+    !modBook.autor ||
+    !modBook.edicao ||
+    !modBook.local ||
+    !modBook.ano ||
+    !modBook.editora
+  ) {
+    return res.status(400).json({
+      error:
+        "Título, autor, edição, localidade, ano de publicação e editora são requeridos",
+    });
   }
-  user.id = users.length + 1;
-  users.push(user);
-  res.status(201).json(user);
+
+  books[index] = modBook;
+  res.status(200);
 });
 
+// Para remover um livro
 app.delete("/books/:id", (req, res) => {
-  const user = req.body;
-  if (!user.name || !user.email) {
-    return res.status(400).json({ error: "Name and email are required" });
-  }
-  user.id = users.length + 1;
-  users.push(user);
-  res.status(201).json(user);
+  const id = req.params.id;
+  let index = books.findIndex((obj) => obj.id === id);
+
+  if (!id) return res.status(400).json({ error: "Id é requerido" });
+
+  books.splice(index, 1);
+  res.status(200);
 });
 
-app.post("/loans", (req, res) => {
-  const user = req.body;
-  if (!user.name || !user.email) {
-    return res.status(400).json({ error: "Name and email are required" });
-  }
-  user.id = users.length + 1;
-  users.push(user);
-  res.status(201).json(user);
+// Para realizar um empréstimo
+app.post("/loans/:id", (req, res) => {
+  const id = req.params.id;
+  let index = books.findIndex((book) => book.id === id);
+
+  if (!id) return res.status(400).json({ error: "Id é requerido" });
+
+  books[index].emprestado = "sim";
+  res.status(200);
 });
 
-app.post("/returns", (req, res) => {
-  const user = req.body;
-  if (!user.name || !user.email) {
-    return res.status(400).json({ error: "Name and email are required" });
-  }
-  user.id = users.length + 1;
-  users.push(user);
-  res.status(201).json(user);
-});
+// Para realizar a devolução de um livro
+app.post("/returns/:id", (req, res) => {
+  const id = req.params.id;
+  let index = books.findIndex((book) => book.id === id);
 
-app.get("/users", (req, res) => {
-  res.json(users);
+  if (!id) {
+    return res.status(400).json({ error: "Id é requerido" });
+  }
+
+  books[index].emprestado = "não";
+  res.status(200);
 });
 
 module.exports = { app, users };
